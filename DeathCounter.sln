@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeathCounter", "DeathCounter\DeathCounter.csproj", "{6663FCBD-7DD7-4DF3-B0F5-F25AF4F95C0B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6663FCBD-7DD7-4DF3-B0F5-F25AF4F95C0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6663FCBD-7DD7-4DF3-B0F5-F25AF4F95C0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6663FCBD-7DD7-4DF3-B0F5-F25AF4F95C0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6663FCBD-7DD7-4DF3-B0F5-F25AF4F95C0B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D5366FFE-756B-44AD-BB3D-F8A4EEE5AF61}
+	EndGlobalSection
+EndGlobal
