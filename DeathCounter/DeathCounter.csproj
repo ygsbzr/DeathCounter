@@ -75,11 +75,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeathCounter.cs" />
+    <Compile Include="Extensions\FsmUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SaveSettings.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="deaht_resized.png" />
+    <EmbeddedResource Include="death.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="damage.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="grenade.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -6,9 +6,15 @@ using System.Text;
 
 namespace DeathCounter
 {
-    public class SaveSettings : IModSettings
+    public class SaveSettings : ModSettings
     {
-        public int DeathCounter
+        public int Deaths
+        {
+            get => GetInt();
+            set => SetInt(value);
+        }
+
+        public int TotalDamage
         {
             get => GetInt();
             set => SetInt(value);
