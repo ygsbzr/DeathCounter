@@ -173,7 +173,7 @@ namespace DeathCounter
         {
             _settings.Deaths += 1;
             GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
-            _huddeath.FindGameObjectInChildren("Geo Amount").GetComponent<TextMeshPro>().text = _settings.Deaths.ToString();
+            _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
             Log(_settings.Deaths);
         }
 
@@ -184,7 +184,7 @@ namespace DeathCounter
             else
                 _settings.TotalDamage += damageAmount;
             GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
-            _huddamage.FindGameObjectInChildren("Geo Amount").GetComponent<TextMeshPro>().text = _settings.TotalDamage.ToString();
+            _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
             Log(_settings.TotalDamage);
             return damageAmount;
         }
