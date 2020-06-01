@@ -83,10 +83,13 @@
     <EmbeddedResource Include="death.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="damage.png" />
+    <EmbeddedResource Include="brokenheart.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="grenade.png" />
+    <EmbeddedResource Include="inventoryatlas.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy /y "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\Mods"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

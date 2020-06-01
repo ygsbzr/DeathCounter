@@ -34,6 +34,8 @@ namespace DeathCounter
         private GameObject _death;
         private GameObject _damage;
 
+        private Texture2D[] _textures;
+
         public override void Initialize()
         {
             Instance = this;
@@ -44,12 +46,10 @@ namespace DeathCounter
 
             ModHooks.Instance.AfterPlayerDeadHook += OnDeath;
 
-            var textures = LoadTextures().ToArray();
+            _textures = LoadTextures().ToArray();
 
-            
-            
-            _damageSprite = Sprite.Create(textures[0], new Rect(0, 0, textures[0].width, textures[0].height), new Vector2(0.5f, 0.5f));
-            _deathSprite = Sprite.Create(textures[1], new Rect(0, 0, textures[1].width, textures[1].height), new Vector2(0.5f, 0.5f));
+            _damageSprite = Sprite.Create(_textures[0], new Rect(0, 0, _textures[0].width, _textures[0].height), new Vector2(0.5f, 0.5f));
+            _deathSprite = Sprite.Create(_textures[1], new Rect(0, 0, _textures[1].width, _textures[1].height), new Vector2(0.5f, 0.5f));
            
             ModHooks.Instance.LanguageGetHook += OnLangGet;
             On.DisplayItemAmount.OnEnable += OnDisplayAmount;
@@ -83,25 +83,46 @@ namespace DeathCounter
             switch (key)
             {
                 case "INV_NAME_DEATH":
-                    Modding.Logger.Log("death lang get");
                     return "Death";
                 case "INV_DESC_DEATH":
-                    Modding.Logger.Log("death lang desc get");
-                    return "number of times you have failed smh.";
+                    return "Imagine dying.";
                 case "INV_NAME_DAMAGE":
-                    Modding.Logger.Log("damage lang get");
                     return "Damage";
                 case "INV_DESC_DAMAGE":
-                    Modding.Logger.Log("death lang desc get");
-                    return "total damage taken or something idk.";
+                    return "Imagine taking damage.";
             }
 
             return Language.Language.GetInternal(key, sheetTitle);
         }
+      
+        IEnumerator epic()
+        {
+            yield return new WaitWhile(() => CharmIconList.Instance == null);
+            var invTexture = _textures[2];
+            Modding.Logger.Log(invTexture.name);
+            var orig = CharmIconList.Instance.spriteList[7];
+            Modding.Logger.Log(orig.rect);
+            foreach (var u in orig.uv)
+                Modding.Logger.Log(new Vector2(ConvertUVToPixelCoordinates(u, orig.texture.width, orig.texture.height).x, orig.texture.height - ConvertUVToPixelCoordinates(u, orig.texture.width, orig.texture.height).y));
+
+            var coords = orig.uv.Select(v => ConvertUVToPixelCoordinates(v, orig.texture.width, orig.texture.height));
+            var x = coords.Min(v => v.x);
+            var y = coords.Min(v => v.y);
+            var texture = orig.texture;
+            Modding.Logger.Log(new Vector2(x, y));
+            var newSprite = Sprite.Create(invTexture, new Rect(x, y, orig.rect.width, orig.rect.height), new Vector2(0.5f, 0.5f));
+       
+            CharmIconList.Instance.spriteList[7] = newSprite;
+        }
+
+        private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
+            => new Vector2(uv.x * width, uv.y * height);
+
 
         private void OnGameSaveLoad(SaveGameData data)
         {
             var inventoryFSM = GameManager.instance.inventoryFSM;
+
             var invCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("Inv");
             var uiControl = invCanvas.LocateMyFSM("UI Inventory");
             var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
@@ -112,7 +133,9 @@ namespace DeathCounter
             _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
 
             _huddeath = CreateStatObject("death", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(2.2f, 11.4f));
-            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(4f, 11.4f));
+            _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(4.3f, 11.4f));
+            _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
 
             var deathState = FsmUtil.CopyState(uiControl, "Geo", "Death");
             uiControl.GetAction<SetFsmGameObject>("Death", 0).setValue = _death;
@@ -124,14 +147,10 @@ namespace DeathCounter
             uiControl.GetAction<SetFsmString>("Damage", 3).setValue = "INV_NAME_DAMAGE";
             uiControl.GetAction<SetFsmString>("Damage", 4).setValue = "INV_DESC_DAMAGE";
 
-            Modding.Logger.Log("creates objects");
-
             uiControl.ChangeTransition("Geo", "UI RIGHT", "Death");
             uiControl.ChangeTransition("Death", "UI RIGHT", "Damage");
             uiControl.ChangeTransition("Death", "UI LEFT", "Geo");
             uiControl.ChangeTransition("Death", "UI UP", "Trinket 1");
-
-            Modding.Logger.Log("added transitions");
 
             uiControl.AddTransition("Trinket 1", "UI DOWN", "Death", false);
             uiControl.AddTransition("Trinket 2", "UI DOWN", "Death", false);
@@ -185,7 +204,6 @@ namespace DeathCounter
                 _settings.TotalDamage += damageAmount;
             GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
             _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
-            Log(_settings.TotalDamage);
             return damageAmount;
         }
 
