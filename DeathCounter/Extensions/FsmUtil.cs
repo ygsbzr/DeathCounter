@@ -1,10 +1,10 @@
 ﻿using HutongGames.PlayMaker;
-using ModCommon.Util;
+using Vasi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using UnityEngine;
 namespace DeathCounter.Extensions
 {
     public static class FsmUtil
@@ -33,7 +33,28 @@ namespace DeathCounter.Extensions
 
             return state;
         }
-
+        public static GameObject FindGameObjectInChildren(this GameObject gameObject, string name)
+        {
+            bool flag = gameObject == null;
+            GameObject result;
+            if (flag)
+            {
+                result = null;
+            }
+            else
+            {
+                foreach (Transform transform in gameObject.GetComponentsInChildren<Transform>(true))
+                {
+                    bool flag2 = transform.name == name;
+                    if (flag2)
+                    {
+                        return transform.gameObject;
+                    }
+                }
+                result = null;
+            }
+            return result;
+        }
 
     }
 }

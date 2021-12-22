@@ -1,6 +1,4 @@
 ﻿using Modding;
-using ModCommon;
-using ModCommon.Util;
 using HutongGames.PlayMaker.Actions;
 using System.Linq;
 using System;
@@ -9,23 +7,27 @@ using System.Reflection;
 using System.IO;
 using DeathCounter.Extensions;
 using System.Collections.Generic;
-using TMPro;
 using System.Collections;
-
+using Vasi;
+using Modding.Menu;
+using Modding.Menu.Config;
+using EXutil = DeathCounter.Extensions.FsmUtil;
 namespace DeathCounter
 {
-    public class DeathCounter : Mod
+    public class DeathCounter : Mod,ILocalSettings<SaveSettings>,ITogglableMod
     {
         public static DeathCounter Instance;
 
         private SaveSettings _settings = new SaveSettings();
-
-        public override ModSettings SaveSettings
+        public void OnLoadLocal(SaveSettings s)
         {
-            get => _settings;
-            set => _settings = value as SaveSettings;
+            _settings = s;
         }
-
+        public SaveSettings OnSaveLocal()
+        {
+            return _settings;
+        }
+        public bool ToggleButtonInsideMenu => false;
         private Sprite _deathSprite;
         private Sprite _damageSprite;
 
@@ -39,23 +41,53 @@ namespace DeathCounter
         public override void Initialize()
         {
             Instance = this;
-           
-            ModHooks.Instance.AfterTakeDamageHook += OnTakeDamage;
 
-            ModHooks.Instance.AfterSavegameLoadHook += OnGameSaveLoad;
+            ModHooks.TakeHealthHook += TakeHealth;
 
-            ModHooks.Instance.AfterPlayerDeadHook += OnDeath;
+            ModHooks.AfterSavegameLoadHook += OnGameSaveLoad;
 
             _textures = LoadTextures().ToArray();
 
             _damageSprite = Sprite.Create(_textures[0], new Rect(0, 0, _textures[0].width, _textures[0].height), new Vector2(0.5f, 0.5f));
             _deathSprite = Sprite.Create(_textures[1], new Rect(0, 0, _textures[1].width, _textures[1].height), new Vector2(0.5f, 0.5f));
-           
-            ModHooks.Instance.LanguageGetHook += OnLangGet;
+
+            ModHooks.LanguageGetHook += OnLangGet;
             On.DisplayItemAmount.OnEnable += OnDisplayAmount;
         }
 
-     
+        private int TakeHealth(int damageAmount)
+        {
+            if (damageAmount >= PlayerData.instance.health + PlayerData.instance.healthBlue)
+            {
+                _settings.Deaths += 1;
+                GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
+                _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+            }
+            if (damageAmount == 9999)
+                _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
+            else
+                _settings.TotalDamage += damageAmount;
+            GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
+            _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
+            return damageAmount;
+        }
+
+        private string OnLangGet(string key, string sheetTitle, string orig)
+        {
+            switch (key)
+            {
+                case "INV_NAME_DEATH":
+                    return "Death";
+                case "INV_DESC_DEATH":
+                    return "Imagine dying.";
+                case "INV_NAME_DAMAGE":
+                    return "Damage";
+                case "INV_DESC_DAMAGE":
+                    return "Imagine taking damage.";
+            }
+            return orig;
+        }
+
         public override List<(string, string)> GetPreloadNames()
             => new List<(string, string)>() { ("Tutorial_01", "_Props/Cave Spikes (1)") };
 
@@ -78,22 +110,6 @@ namespace DeathCounter
             }
         }
 
-        private string OnLangGet(string key, string sheetTitle)
-        {
-            switch (key)
-            {
-                case "INV_NAME_DEATH":
-                    return "Death";
-                case "INV_DESC_DEATH":
-                    return "Imagine dying.";
-                case "INV_NAME_DAMAGE":
-                    return "Damage";
-                case "INV_DESC_DAMAGE":
-                    return "Imagine taking damage.";
-            }
-
-            return Language.Language.GetInternal(key, sheetTitle);
-        }
       
         IEnumerator epic()
         {
@@ -137,12 +153,12 @@ namespace DeathCounter
             _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(4.3f, 11.4f));
             _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
 
-            var deathState = FsmUtil.CopyState(uiControl, "Geo", "Death");
+            var deathState = EXutil.CopyState(uiControl, "Geo", "Death");
             uiControl.GetAction<SetFsmGameObject>("Death", 0).setValue = _death;
             uiControl.GetAction<SetFsmString>("Death", 3).setValue = "INV_NAME_DEATH";
             uiControl.GetAction<SetFsmString>("Death", 4).setValue = "INV_DESC_DEATH";
 
-            var damageState = FsmUtil.CopyState(uiControl, "Death", "Damage");
+            var damageState = EXutil.CopyState(uiControl, "Death", "Damage");
             uiControl.GetAction<SetFsmGameObject>("Damage", 0).setValue = _damage;
             uiControl.GetAction<SetFsmString>("Damage", 3).setValue = "INV_NAME_DAMAGE";
             uiControl.GetAction<SetFsmString>("Damage", 4).setValue = "INV_DESC_DAMAGE";
@@ -180,33 +196,31 @@ namespace DeathCounter
             {
                 case "death":                 
                     self.textObject.text = _settings.Deaths.ToString();
+                    self.textObject.fontSize = 4;
                     break;
                 case "damage":                 
                     self.textObject.text = _settings.TotalDamage.ToString();
+                    self.textObject.fontSize = 4;
                     break;
               
             } 
         }
 
-        private void OnDeath()
+
+       
+        public void Unload()
         {
-            _settings.Deaths += 1;
-            GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
+            _settings.Deaths = 0;
+            _settings.TotalDamage = 0;
             _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
-            Log(_settings.Deaths);
-        }
-
-        private int OnTakeDamage(int hazardType, int damageAmount)
-        {
-            if (damageAmount == 9999)
-                _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
-            else
-                _settings.TotalDamage += damageAmount;
-            GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
             _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
-            return damageAmount;
-        }
+            ModHooks.TakeHealthHook -= TakeHealth;
 
+            ModHooks.AfterSavegameLoadHook -= OnGameSaveLoad;
+
+            ModHooks.LanguageGetHook -= OnLangGet;
+            On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
+        }
         IEnumerator PlayBad(SpriteRenderer s)
         {
             s.material.color = Color.red;
