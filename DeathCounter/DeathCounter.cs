@@ -1,4 +1,4 @@
-﻿using Modding;
+using Modding;
 using HutongGames.PlayMaker.Actions;
 using System.Linq;
 using System;
@@ -9,14 +9,14 @@ using DeathCounter.Extensions;
 using System.Collections.Generic;
 using System.Collections;
 using Vasi;
-using Modding.Menu;
-using Modding.Menu.Config;
 using EXutil = DeathCounter.Extensions.FsmUtil;
 namespace DeathCounter
 {
-    public class DeathCounter : Mod,ILocalSettings<SaveSettings>,ITogglableMod
+    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, IMenuMod
     {
         public static DeathCounter Instance;
+
+        public override string GetVersion() => "UNKNOWN-blu.3";
 
         private SaveSettings _settings = new SaveSettings();
         public void OnLoadLocal(SaveSettings s)
@@ -38,12 +38,17 @@ namespace DeathCounter
 
         private Texture2D[] _textures;
 
+        public static GlobalSettings GlobalSettings { get; set; } = new GlobalSettings();
+        public void OnLoadGlobal(GlobalSettings globalSettings) => GlobalSettings = globalSettings;
+        public GlobalSettings OnSaveGlobal() => GlobalSettings;
+
         public override void Initialize()
         {
             Instance = this;
 
             ModHooks.TakeHealthHook += TakeHealth;
 
+            ModHooks.NewGameHook += OnNewGame;
             ModHooks.AfterSavegameLoadHook += OnGameSaveLoad;
 
             _textures = LoadTextures().ToArray();
@@ -53,22 +58,66 @@ namespace DeathCounter
 
             ModHooks.LanguageGetHook += OnLangGet;
             On.DisplayItemAmount.OnEnable += OnDisplayAmount;
+            On.UIManager.UIClosePauseMenu += OnUnpause;
+        }
+
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        {
+            return new List<IMenuMod.MenuEntry>
+            {
+                new IMenuMod.MenuEntry()
+            {
+                Name = "Show Counters:",
+                Description = string.Empty,
+                Values = new string[] { "True", "False" },
+                Saver = opt => GlobalSettings.ShowCounters = opt == 0,
+                Loader = () => GlobalSettings.ShowCounters ? 0 : 1
+            },
+            new IMenuMod.MenuEntry
+                {
+                    Name = "Display Position:",
+                    Description = "Toggle where to display the counters",
+                    Values = new string[] { "Beside Geo Count", "Under Geo Count" },
+                    Saver = SetDisplayState,
+                    Loader = GetDisplayState
+                }
+            };
+        }
+
+        public void SetDisplayState(int i)
+        {
+            GlobalSettings.BesideGeoCount = i == 0;
+            GlobalSettings.UnderGeoCount = i == 1;
+        }
+
+        public int GetDisplayState()
+        {
+            if (GlobalSettings.BesideGeoCount) return 0;
+            else if (GlobalSettings.UnderGeoCount) return 1;
+            return 0;
         }
 
         private int TakeHealth(int damageAmount)
         {
             if (damageAmount >= PlayerData.instance.health + PlayerData.instance.healthBlue)
             {
-                _settings.Deaths += 1;
-                GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
-                _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+                _settings.Deaths++;
+                if (_huddeath != null)
+                {
+                    GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
+                    _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+                }
             }
             if (damageAmount == 9999)
                 _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
             else
                 _settings.TotalDamage += damageAmount;
-            GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
-            _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
+            
+            if (_huddamage != null)
+            {
+                GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
+                _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
+            }
             return damageAmount;
         }
 
@@ -91,12 +140,9 @@ namespace DeathCounter
         public override List<(string, string)> GetPreloadNames()
             => new List<(string, string)>() { ("Tutorial_01", "_Props/Cave Spikes (1)") };
 
-        
-
         private IEnumerable<Texture2D> LoadTextures()
         {
-            var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames().Where(x => x.EndsWith(".png")).OrderBy(x => x);
-            foreach (var resource in resources)
+            foreach (var resource in Assembly.GetExecutingAssembly().GetManifestResourceNames().Where(x => x.EndsWith(".png")).OrderBy(x => x))
             {
                 using (Stream res = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
                 {
@@ -110,7 +156,6 @@ namespace DeathCounter
             }
         }
 
-      
         IEnumerator epic()
         {
             yield return new WaitWhile(() => CharmIconList.Instance == null);
@@ -127,15 +172,30 @@ namespace DeathCounter
             var texture = orig.texture;
             Modding.Logger.Log(new Vector2(x, y));
             var newSprite = Sprite.Create(invTexture, new Rect(x, y, orig.rect.width, orig.rect.height), new Vector2(0.5f, 0.5f));
-       
+
             CharmIconList.Instance.spriteList[7] = newSprite;
         }
 
         private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
             => new Vector2(uv.x * width, uv.y * height);
 
+        private void OnNewGame()
+        {
+            OnGameSaveLoad(null);
+        }
 
-        private void OnGameSaveLoad(SaveGameData data)
+        private const float HudDeathX = 2.2f;
+        private const float HudDamageX = 4.3f;
+
+        private const float BesideGeoCountY = 11.3f;
+        private const float UnderGeoCountY = 10.55f;
+        private float GetGeoCountHeight() => GlobalSettings.BesideGeoCount
+            ? BesideGeoCountY
+            : GlobalSettings.UnderGeoCount
+                ? UnderGeoCountY
+                : BesideGeoCountY;
+
+        private void OnGameSaveLoad(SaveGameData _)
         {
             var inventoryFSM = GameManager.instance.inventoryFSM;
 
@@ -144,21 +204,24 @@ namespace DeathCounter
             var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
 
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
+            DrawHudDeathAndDamage(prefab, hudCanvas);
+            if (!GlobalSettings.ShowCounters)
+            {
+                _huddamage?.Recycle();
+                _huddeath?.Recycle();
+                _huddamage = null;
+                _huddeath = null;
+            }
 
-            _damage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, invCanvas.transform, _damageSprite, new Vector3(10.5f, 0, 0));
             _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
+            _damage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, invCanvas.transform, _damageSprite, new Vector3(10.5f, 0, 0));
 
-            _huddeath = CreateStatObject("death", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(2.2f, 11.4f));
-            _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
-            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(4.3f, 11.4f));
-            _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
-
-            var deathState = EXutil.CopyState(uiControl, "Geo", "Death");
+            EXutil.CopyState(uiControl, "Geo", "Death");
             uiControl.GetAction<SetFsmGameObject>("Death", 0).setValue = _death;
             uiControl.GetAction<SetFsmString>("Death", 3).setValue = "INV_NAME_DEATH";
             uiControl.GetAction<SetFsmString>("Death", 4).setValue = "INV_DESC_DEATH";
 
-            var damageState = EXutil.CopyState(uiControl, "Death", "Damage");
+            EXutil.CopyState(uiControl, "Death", "Damage");
             uiControl.GetAction<SetFsmGameObject>("Damage", 0).setValue = _damage;
             uiControl.GetAction<SetFsmString>("Damage", 3).setValue = "INV_NAME_DAMAGE";
             uiControl.GetAction<SetFsmString>("Damage", 4).setValue = "INV_DESC_DAMAGE";
@@ -174,6 +237,13 @@ namespace DeathCounter
             uiControl.AddTransition("Trinket 4", "UI DOWN", "Death", false);
         }
 
+        private void DrawHudDeathAndDamage(GameObject prefab, GameObject hudCanvas)
+        {
+            _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(HudDeathX, GetGeoCountHeight()));
+            _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(HudDamageX, GetGeoCountHeight()));
+            _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+        }
 
         private GameObject CreateStatObject(string name, string text, GameObject prefab, Transform parent, Sprite sprite, Vector3 postoAdd)
         {
@@ -181,6 +251,7 @@ namespace DeathCounter
             go.transform.position += postoAdd;
             go.GetComponent<DisplayItemAmount>().playerDataInt = name;
             go.GetComponent<DisplayItemAmount>().textObject.text = text;
+            go.GetComponent<DisplayItemAmount>().textObject.fontSize = 4;
             go.GetComponent<SpriteRenderer>().sprite = sprite;
             go.SetActive(true);
             go.GetComponent<BoxCollider2D>().size = new Vector2(1.5f, 1f);
@@ -194,33 +265,50 @@ namespace DeathCounter
             orig(self);
             switch (self.playerDataInt)
             {
-                case "death":                 
+                case "death":
                     self.textObject.text = _settings.Deaths.ToString();
-                    self.textObject.fontSize = 4;
                     break;
-                case "damage":                 
+                case "damage":
                     self.textObject.text = _settings.TotalDamage.ToString();
-                    self.textObject.fontSize = 4;
                     break;
-              
-            } 
+            }
         }
 
+        private void OnUnpause(On.UIManager.orig_UIClosePauseMenu origUIClosePauseMenu, UIManager self)
+        {
+            origUIClosePauseMenu(self);
 
-       
+            _huddeath?.Recycle();
+            _huddamage?.Recycle();
+            if (!GlobalSettings.ShowCounters)
+            {
+                _huddamage = null;
+                _huddeath = null;
+                return;
+            }
+
+            var inventoryFSM = GameManager.instance.inventoryFSM;
+            var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
+            var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
+            DrawHudDeathAndDamage(prefab, hudCanvas);
+        }
+
         public void Unload()
         {
             _settings.Deaths = 0;
             _settings.TotalDamage = 0;
-            _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
-            _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
+            if (_huddeath != null) _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+            if (_huddamage != null) _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
             ModHooks.TakeHealthHook -= TakeHealth;
 
+            ModHooks.NewGameHook -= OnNewGame;
             ModHooks.AfterSavegameLoadHook -= OnGameSaveLoad;
 
             ModHooks.LanguageGetHook -= OnLangGet;
             On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
+            On.UIManager.UIClosePauseMenu -= OnUnpause;
         }
+
         IEnumerator PlayBad(SpriteRenderer s)
         {
             s.material.color = Color.red;
