@@ -48,8 +48,7 @@ namespace DeathCounter
 
             ModHooks.TakeHealthHook += TakeHealth;
 
-            ModHooks.NewGameHook += OnNewGame;
-            ModHooks.AfterSavegameLoadHook += OnGameSaveLoad;
+            On.HeroController.Awake += Awake;
 
             _textures = LoadTextures().ToArray();
 
@@ -59,6 +58,49 @@ namespace DeathCounter
             ModHooks.LanguageGetHook += OnLangGet;
             On.DisplayItemAmount.OnEnable += OnDisplayAmount;
             On.UIManager.UIClosePauseMenu += OnUnpause;
+        }
+
+        private void Awake(On.HeroController.orig_Awake orig, HeroController self)
+        {
+            orig(self);
+            var inventoryFSM = GameManager.instance.inventoryFSM;
+
+            var invCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("Inv");
+            var uiControl = invCanvas.LocateMyFSM("UI Inventory");
+            var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
+
+            var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
+            DrawHudDeathAndDamage(prefab, hudCanvas);
+            if (!GlobalSettings.ShowCounters)
+            {
+                _huddamage?.Recycle();
+                _huddeath?.Recycle();
+                _huddamage = null;
+                _huddeath = null;
+            }
+
+            _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
+            _damage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, invCanvas.transform, _damageSprite, new Vector3(10.5f, 0, 0));
+
+            EXutil.CopyState(uiControl, "Geo", "Death");
+            uiControl.GetAction<SetFsmGameObject>("Death", 0).setValue = _death;
+            uiControl.GetAction<SetFsmString>("Death", 3).setValue = "INV_NAME_DEATH";
+            uiControl.GetAction<SetFsmString>("Death", 4).setValue = "INV_DESC_DEATH";
+
+            EXutil.CopyState(uiControl, "Death", "Damage");
+            uiControl.GetAction<SetFsmGameObject>("Damage", 0).setValue = _damage;
+            uiControl.GetAction<SetFsmString>("Damage", 3).setValue = "INV_NAME_DAMAGE";
+            uiControl.GetAction<SetFsmString>("Damage", 4).setValue = "INV_DESC_DAMAGE";
+
+            uiControl.ChangeTransition("Geo", "UI RIGHT", "Death");
+            uiControl.ChangeTransition("Death", "UI RIGHT", "Damage");
+            uiControl.ChangeTransition("Death", "UI LEFT", "Geo");
+            uiControl.ChangeTransition("Death", "UI UP", "Trinket 1");
+
+            uiControl.AddTransition("Trinket 1", "UI DOWN", "Death", false);
+            uiControl.AddTransition("Trinket 2", "UI DOWN", "Death", false);
+            uiControl.AddTransition("Trinket 3", "UI DOWN", "Death", false);
+            uiControl.AddTransition("Trinket 4", "UI DOWN", "Death", false);
         }
 
         public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
@@ -179,10 +221,7 @@ namespace DeathCounter
         private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
             => new Vector2(uv.x * width, uv.y * height);
 
-        private void OnNewGame()
-        {
-            OnGameSaveLoad(null);
-        }
+       
 
         private const float HudDeathX = 2.2f;
         private const float HudDamageX = 4.3f;
@@ -195,47 +234,7 @@ namespace DeathCounter
                 ? UnderGeoCountY
                 : BesideGeoCountY;
 
-        private void OnGameSaveLoad(SaveGameData _)
-        {
-            var inventoryFSM = GameManager.instance.inventoryFSM;
-
-            var invCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("Inv");
-            var uiControl = invCanvas.LocateMyFSM("UI Inventory");
-            var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
-
-            var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
-            DrawHudDeathAndDamage(prefab, hudCanvas);
-            if (!GlobalSettings.ShowCounters)
-            {
-                _huddamage?.Recycle();
-                _huddeath?.Recycle();
-                _huddamage = null;
-                _huddeath = null;
-            }
-
-            _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
-            _damage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, invCanvas.transform, _damageSprite, new Vector3(10.5f, 0, 0));
-
-            EXutil.CopyState(uiControl, "Geo", "Death");
-            uiControl.GetAction<SetFsmGameObject>("Death", 0).setValue = _death;
-            uiControl.GetAction<SetFsmString>("Death", 3).setValue = "INV_NAME_DEATH";
-            uiControl.GetAction<SetFsmString>("Death", 4).setValue = "INV_DESC_DEATH";
-
-            EXutil.CopyState(uiControl, "Death", "Damage");
-            uiControl.GetAction<SetFsmGameObject>("Damage", 0).setValue = _damage;
-            uiControl.GetAction<SetFsmString>("Damage", 3).setValue = "INV_NAME_DAMAGE";
-            uiControl.GetAction<SetFsmString>("Damage", 4).setValue = "INV_DESC_DAMAGE";
-
-            uiControl.ChangeTransition("Geo", "UI RIGHT", "Death");
-            uiControl.ChangeTransition("Death", "UI RIGHT", "Damage");
-            uiControl.ChangeTransition("Death", "UI LEFT", "Geo");
-            uiControl.ChangeTransition("Death", "UI UP", "Trinket 1");
-
-            uiControl.AddTransition("Trinket 1", "UI DOWN", "Death", false);
-            uiControl.AddTransition("Trinket 2", "UI DOWN", "Death", false);
-            uiControl.AddTransition("Trinket 3", "UI DOWN", "Death", false);
-            uiControl.AddTransition("Trinket 4", "UI DOWN", "Death", false);
-        }
+       
 
         private void DrawHudDeathAndDamage(GameObject prefab, GameObject hudCanvas)
         {
@@ -301,11 +300,11 @@ namespace DeathCounter
             if (_huddamage != null) _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
             ModHooks.TakeHealthHook -= TakeHealth;
 
-            ModHooks.NewGameHook -= OnNewGame;
-            ModHooks.AfterSavegameLoadHook -= OnGameSaveLoad;
+           
 
             ModHooks.LanguageGetHook -= OnLangGet;
             On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
+            On.HeroController.Awake -= Awake;
             On.UIManager.UIClosePauseMenu -= OnUnpause;
         }
 

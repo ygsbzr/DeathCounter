@@ -12,7 +12,7 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
-    <HKModdingApi>F:\hkMOD\1.5Moddingapi\</HKModdingApi>
+    <HKModdingApi>D:\HKmod\1.5Moddingapi\</HKModdingApi>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,7 +38,7 @@
       <HintPath>$(HKModdingApi)Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp">
-      <HintPath>E:\Steam\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\MMHOOK_Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\1.5Moddingapi\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>$(HKModdingApi)PlayMaker.dll</HintPath>
@@ -77,7 +77,7 @@
       <HintPath>$(HKModdingApi)UnityEngine.UIModule.dll</HintPath>
     </Reference>
     <Reference Include="Vasi">
-      <HintPath>..\..\1.5Moddingapi\Vasi.dll</HintPath>
+      <HintPath>$(HKModdingApi)Vasi.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
