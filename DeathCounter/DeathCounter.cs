@@ -12,7 +12,7 @@ using Vasi;
 using EXutil = DeathCounter.Extensions.FsmUtil;
 namespace DeathCounter
 {
-    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, IMenuMod
+    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, IMenuMod,ITogglableMod
     {
         public static DeathCounter Instance;
 
@@ -283,6 +283,8 @@ namespace DeathCounter
             {
                 _huddamage = null;
                 _huddeath = null;
+                _settings.TotalDamage = 0;
+                _settings.Deaths = 0;
                 return;
             }
 
