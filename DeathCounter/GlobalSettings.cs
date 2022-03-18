@@ -2,7 +2,9 @@
 {
     public class GlobalSettings
     {
-        public bool ShowCounters = true;
+        public bool ShowDeathCounter = true;
+        
+        public bool ShowHitCounter = true;
 
         public bool BesideGeoCount = true;
 
