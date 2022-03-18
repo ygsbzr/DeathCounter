@@ -7,17 +7,17 @@ using System.IO;
 using DeathCounter.Extensions;
 using System.Collections.Generic;
 using System.Collections;
-using Vasi;
+using Satchel;
 using EXutil = DeathCounter.Extensions.FsmUtil;
 namespace DeathCounter
 {
-    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, IMenuMod
+    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>,ICustomMenuMod
     {
         public static DeathCounter Instance;
 
         public override string GetVersion() => "1.5.78-4";
 
-        private SaveSettings _settings = new SaveSettings();
+        public static SaveSettings _settings = new SaveSettings();
         public void OnLoadLocal(SaveSettings s)
         {
             _settings = s;
@@ -40,7 +40,10 @@ namespace DeathCounter
         public static GlobalSettings GlobalSettings { get; set; } = new GlobalSettings();
         public void OnLoadGlobal(GlobalSettings globalSettings) => GlobalSettings = globalSettings;
         public GlobalSettings OnSaveGlobal() => GlobalSettings;
-
+        public MenuScreen GetMenuScreen(MenuScreen lastmenu,ModToggleDelegates? delegates)
+        {
+            return ModMenu.GetMenu(lastmenu);
+        }
         public override void Initialize()
         {
             Instance = this;
@@ -102,41 +105,7 @@ namespace DeathCounter
             uiControl.AddTransition("Trinket 4", "UI DOWN", "Death", false);
         }
 
-        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
-        {
-            return new List<IMenuMod.MenuEntry>
-            {
-                new IMenuMod.MenuEntry()
-            {
-                Name = "Show Counters:",
-                Description = "Damage and deaths will still be tracked in the background",
-                Values = new string[] { "True", "False" },
-                Saver = opt => GlobalSettings.ShowCounters = opt == 0,
-                Loader = () => GlobalSettings.ShowCounters ? 0 : 1
-            },
-            new IMenuMod.MenuEntry
-                {
-                    Name = "Display Position:",
-                    Description = "Toggle where to display the counters",
-                    Values = new string[] { "Beside Geo Count", "Under Geo Count" },
-                    Saver = SetDisplayState,
-                    Loader = GetDisplayState
-                }
-            };
-        }
 
-        public void SetDisplayState(int i)
-        {
-            GlobalSettings.BesideGeoCount = i == 0;
-            GlobalSettings.UnderGeoCount = i == 1;
-        }
-
-        public int GetDisplayState()
-        {
-            if (GlobalSettings.BesideGeoCount) return 0;
-            else if (GlobalSettings.UnderGeoCount) return 1;
-            return 0;
-        }
 
         private int TakeHealth(int damageAmount)
         {
@@ -294,7 +263,6 @@ namespace DeathCounter
             if (_huddeath != null) _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
             if (_huddamage != null) _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
             ModHooks.TakeHealthHook -= TakeHealth;
-
             ModHooks.LanguageGetHook -= OnLangGet;
             On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
             On.HeroController.Awake -= Awake;
