@@ -17,7 +17,7 @@ namespace DeathCounter
         {
             return new Menu("Death Counter", new Element[]
             {
-                new HorizontalOption("Show Counters:","",
+                new HorizontalOption("Show Counters:","Damage and deaths will still be tracked in the background",
                 new string[]{"True","False"},
                 (opt)=>{DeathCounter.GlobalSettings.ShowCounters=(opt==0); },
                 ()=>DeathCounter.GlobalSettings.ShowCounters? 0:1
