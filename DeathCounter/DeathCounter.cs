@@ -1,7 +1,6 @@
 using Modding;
 using HutongGames.PlayMaker.Actions;
 using System.Linq;
-using System;
 using UnityEngine;
 using System.Reflection;
 using System.IO;
@@ -12,11 +11,11 @@ using Vasi;
 using EXutil = DeathCounter.Extensions.FsmUtil;
 namespace DeathCounter
 {
-    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, IMenuMod,ITogglableMod
+    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, IMenuMod
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "UNKNOWN-blu.3";
+        public override string GetVersion() => "1.5.78-4";
 
         private SaveSettings _settings = new SaveSettings();
         public void OnLoadLocal(SaveSettings s)
@@ -110,7 +109,7 @@ namespace DeathCounter
                 new IMenuMod.MenuEntry()
             {
                 Name = "Show Counters:",
-                Description = string.Empty,
+                Description = "Damage and deaths will still be tracked in the background",
                 Values = new string[] { "True", "False" },
                 Saver = opt => GlobalSettings.ShowCounters = opt == 0,
                 Loader = () => GlobalSettings.ShowCounters ? 0 : 1
@@ -221,8 +220,6 @@ namespace DeathCounter
         private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
             => new Vector2(uv.x * width, uv.y * height);
 
-       
-
         private const float HudDeathX = 2.2f;
         private const float HudDamageX = 4.3f;
 
@@ -233,8 +230,6 @@ namespace DeathCounter
             : GlobalSettings.UnderGeoCount
                 ? UnderGeoCountY
                 : BesideGeoCountY;
-
-       
 
         private void DrawHudDeathAndDamage(GameObject prefab, GameObject hudCanvas)
         {
@@ -283,8 +278,6 @@ namespace DeathCounter
             {
                 _huddamage = null;
                 _huddeath = null;
-                _settings.TotalDamage = 0;
-                _settings.Deaths = 0;
                 return;
             }
 
@@ -301,8 +294,6 @@ namespace DeathCounter
             if (_huddeath != null) _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
             if (_huddamage != null) _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
             ModHooks.TakeHealthHook -= TakeHealth;
-
-           
 
             ModHooks.LanguageGetHook -= OnLangGet;
             On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
