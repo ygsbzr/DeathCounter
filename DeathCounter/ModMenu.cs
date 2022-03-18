@@ -22,7 +22,7 @@ namespace DeathCounter
                 (opt)=>{DeathCounter.GlobalSettings.ShowDeathCounter=(opt==0); },
                 ()=>DeathCounter.GlobalSettings.ShowDeathCounter? 0:1
                 ),
-                new HorizontalOption("Show Hit Coutner:","Damage will still be tracked in the background",
+                new HorizontalOption("Show Hit Counter:","Damage will still be tracked in the background",
                 new string[]{"True","False"},
                 (opt)=>{DeathCounter.GlobalSettings.ShowHitCounter=(opt==0); },
                 ()=>DeathCounter.GlobalSettings.ShowHitCounter? 0:1
