@@ -15,7 +15,7 @@ namespace DeathCounter
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-4";
+        public override string GetVersion() => "1.5.78-5";
 
         public static SaveSettings _settings = new SaveSettings();
         public void OnLoadLocal(SaveSettings s)
@@ -73,12 +73,15 @@ namespace DeathCounter
 
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
             DrawHudDeathAndDamage(prefab, hudCanvas);
-            if (!GlobalSettings.ShowCounters)
+            if (!GlobalSettings.ShowDeathCounter)
+            {
+                _huddeath?.Recycle();
+                _huddeath = null;
+            }
+            if (!GlobalSettings.ShowHitCounter)
             {
                 _huddamage?.Recycle();
-                _huddeath?.Recycle();
                 _huddamage = null;
-                _huddeath = null;
             }
 
             _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
@@ -243,10 +246,14 @@ namespace DeathCounter
 
             _huddeath?.Recycle();
             _huddamage?.Recycle();
-            if (!GlobalSettings.ShowCounters)
+            if (!GlobalSettings.ShowDeathCounter)
             {
-                _huddamage = null;
                 _huddeath = null;
+                return;
+            }
+            if (!GlobalSettings.ShowHitCounter)
+            {
+                _huddamage = null;     
                 return;
             }
 

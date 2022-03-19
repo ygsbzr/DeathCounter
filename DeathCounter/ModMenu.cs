@@ -17,10 +17,15 @@ namespace DeathCounter
         {
             return new Menu("Death Counter", new Element[]
             {
-                new HorizontalOption("Show Counters:","Damage and deaths will still be tracked in the background",
+                new HorizontalOption("Show Death Counter:","Deaths will still be tracked in the background",
                 new string[]{"True","False"},
-                (opt)=>{DeathCounter.GlobalSettings.ShowCounters=(opt==0); },
-                ()=>DeathCounter.GlobalSettings.ShowCounters? 0:1
+                (opt)=>{DeathCounter.GlobalSettings.ShowDeathCounter=(opt==0); },
+                ()=>DeathCounter.GlobalSettings.ShowDeathCounter? 0:1
+                ),
+                new HorizontalOption("Show Hit Counter:","Damage will still be tracked in the background",
+                new string[]{"True","False"},
+                (opt)=>{DeathCounter.GlobalSettings.ShowHitCounter=(opt==0); },
+                ()=>DeathCounter.GlobalSettings.ShowHitCounter? 0:1
                 ),
                 new HorizontalOption("Display Position:",
                 "Toggle where to display the counters",
