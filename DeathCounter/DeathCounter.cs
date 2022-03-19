@@ -72,7 +72,8 @@ namespace DeathCounter
             var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
 
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
-            DrawHudDeathAndDamage(prefab, hudCanvas);
+            DrawHudDeath(prefab, hudCanvas);
+            DrawHudDamage(prefab, hudCanvas);
             if (!GlobalSettings.ShowDeathCounter)
             {
                 _huddeath?.Recycle();
@@ -203,10 +204,13 @@ namespace DeathCounter
                 ? UnderGeoCountY
                 : BesideGeoCountY;
 
-        private void DrawHudDeathAndDamage(GameObject prefab, GameObject hudCanvas)
+        private void DrawHudDeath(GameObject prefab,GameObject hudCanvas)
         {
             _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(HudDeathX, GetGeoCountHeight()));
             _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+        }
+        private void DrawHudDamage(GameObject prefab,GameObject hudCanvas)
+        {
             _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(HudDamageX, GetGeoCountHeight()));
             _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
         }
@@ -246,21 +250,20 @@ namespace DeathCounter
 
             _huddeath?.Recycle();
             _huddamage?.Recycle();
-            if (!GlobalSettings.ShowDeathCounter)
-            {
-                _huddeath = null;
-                return;
-            }
-            if (!GlobalSettings.ShowHitCounter)
-            {
-                _huddamage = null;     
-                return;
-            }
-
             var inventoryFSM = GameManager.instance.inventoryFSM;
             var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
-            DrawHudDeathAndDamage(prefab, hudCanvas);
+            if (GlobalSettings.ShowDeathCounter)
+            {
+                DrawHudDeath(prefab, hudCanvas);
+            }
+            if (GlobalSettings.ShowHitCounter)
+            {
+                DrawHudDamage(prefab, hudCanvas);
+            }  
+                
+
+            
         }
 
         public void Unload()

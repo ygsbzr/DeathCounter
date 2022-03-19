@@ -33,10 +33,15 @@ namespace DeathCounter
                 i=> SetDisplayState(i),
                ()=> GetDisplayState()
                 ),
-                new MenuButton("Reset Counter",
-                "Click button to reset Death & damage",
+                new MenuButton("Reset Death Count",
+                "Click button to reset Death",
                 (mb)=>{
                    DeathCounter._settings.Deaths=0;
+                }
+                ),
+                new MenuButton("Reset Damage Count",
+                "Click button to reset Damage",
+                (mb)=>{
                    DeathCounter._settings.TotalDamage=0;
                 }
                 )
