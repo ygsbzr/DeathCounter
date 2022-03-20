@@ -11,11 +11,11 @@ using Satchel;
 using EXutil = DeathCounter.Extensions.FsmUtil;
 namespace DeathCounter
 {
-    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>,ICustomMenuMod
+    public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, ICustomMenuMod
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-5";
+        public override string GetVersion() => "1.5.78-6";
 
         public static SaveSettings _settings = new SaveSettings();
         public void OnLoadLocal(SaveSettings s)
@@ -40,7 +40,7 @@ namespace DeathCounter
         public static GlobalSettings GlobalSettings { get; set; } = new GlobalSettings();
         public void OnLoadGlobal(GlobalSettings globalSettings) => GlobalSettings = globalSettings;
         public GlobalSettings OnSaveGlobal() => GlobalSettings;
-        public MenuScreen GetMenuScreen(MenuScreen lastmenu,ModToggleDelegates? delegates)
+        public MenuScreen GetMenuScreen(MenuScreen lastmenu, ModToggleDelegates? delegates)
         {
             return ModMenu.GetMenu(lastmenu);
         }
@@ -126,7 +126,7 @@ namespace DeathCounter
                 _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
             else
                 _settings.TotalDamage += damageAmount;
-            
+
             if (_huddamage != null)
             {
                 GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
@@ -193,25 +193,41 @@ namespace DeathCounter
         private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
             => new Vector2(uv.x * width, uv.y * height);
 
-        private const float HudDeathX = 2.2f;
-        private const float HudDamageX = 4.3f;
+        private const float DefaultHudDeathX = 2.2f;
+        private const float DefaultHudDamageX = 4.3f;
+
+        private const float AlignedHudDeathX = -1.1f;
+        private const float AlignedHudDamageX = 1f;
 
         private const float BesideGeoCountY = 11.3f;
         private const float UnderGeoCountY = 10.55f;
-        private float GetGeoCountHeight() => GlobalSettings.BesideGeoCount
+        private const float FurtherUnderGeoCountY = 9.8f;
+
+        private float GetHudDeathY() => GetHudY();
+        private float GetHudDamageY() => GetHudY();
+
+        private float GetHudY() => GlobalSettings.BesideGeoCount
             ? BesideGeoCountY
             : GlobalSettings.UnderGeoCount
                 ? UnderGeoCountY
-                : BesideGeoCountY;
+                : GlobalSettings.FurtherUnderGeoCount
+                    ? FurtherUnderGeoCountY
+                    : BesideGeoCountY;
 
-        private void DrawHudDeath(GameObject prefab,GameObject hudCanvas)
+        private float GetHudDeathX() => GlobalSettings.FurtherUnderGeoCount ? AlignedHudDeathX : DefaultHudDeathX;
+        
+        private float GetHudDamageX() => GlobalSettings.ShowDeathCounter ?
+            (GlobalSettings.FurtherUnderGeoCount ? AlignedHudDamageX : DefaultHudDamageX) :
+            GetHudDeathX();
+
+        private void DrawHudDeath(GameObject prefab, GameObject hudCanvas)
         {
-            _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(HudDeathX, GetGeoCountHeight()));
+            _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(GetHudDeathX(), GetHudDeathY()));
             _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
         }
-        private void DrawHudDamage(GameObject prefab,GameObject hudCanvas)
+        private void DrawHudDamage(GameObject prefab, GameObject hudCanvas)
         {
-            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(HudDamageX, GetGeoCountHeight()));
+            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(GetHudDamageX(), GetHudDamageY()));
             _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
         }
 
@@ -260,10 +276,7 @@ namespace DeathCounter
             if (GlobalSettings.ShowHitCounter)
             {
                 DrawHudDamage(prefab, hudCanvas);
-            }  
-                
-
-            
+            }
         }
 
         public void Unload()
