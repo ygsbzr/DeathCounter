@@ -2,6 +2,7 @@ using Modding;
 using HutongGames.PlayMaker.Actions;
 using System.Linq;
 using UnityEngine;
+using System;
 using System.Reflection;
 using System.IO;
 using DeathCounter.Extensions;
@@ -9,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections;
 using Satchel;
 using EXutil = DeathCounter.Extensions.FsmUtil;
+
 namespace DeathCounter
 {
     public class DeathCounter : Mod, ILocalSettings<SaveSettings>, IGlobalSettings<GlobalSettings>, ICustomMenuMod
@@ -18,14 +20,17 @@ namespace DeathCounter
         public override string GetVersion() => "1.5.78-6";
 
         public static SaveSettings _settings = new SaveSettings();
+
         public void OnLoadLocal(SaveSettings s)
         {
             _settings = s;
         }
+
         public SaveSettings OnSaveLocal()
         {
             return _settings;
         }
+
         public bool ToggleButtonInsideMenu => false;
         private Sprite _deathSprite;
         private Sprite _damageSprite;
@@ -44,6 +49,7 @@ namespace DeathCounter
         {
             return ModMenu.GetMenu(lastmenu);
         }
+
         public override void Initialize()
         {
             Instance = this;
@@ -109,29 +115,36 @@ namespace DeathCounter
             uiControl.AddTransition("Trinket 4", "UI DOWN", "Death", false);
         }
 
-
-
         private int TakeHealth(int damageAmount)
         {
-            if (damageAmount >= PlayerData.instance.health + PlayerData.instance.healthBlue)
+            try
             {
-                _settings.Deaths++;
-                if (_huddeath != null)
+                if (damageAmount >= PlayerData.instance.health + PlayerData.instance.healthBlue)
                 {
-                    GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
-                    _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+                    _settings.Deaths++;
+                    if (_huddeath != null)
+                    {
+                        GameManager.instance.StartCoroutine(PlayBad(_huddeath.GetComponent<SpriteRenderer>()));
+                        _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+                    }
+                }
+                if (damageAmount == 9999)
+                    _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
+                else
+                    _settings.TotalDamage += damageAmount;
+
+                if (_huddamage != null)
+                {
+                    GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
+                    _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
                 }
             }
-            if (damageAmount == 9999)
-                _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
-            else
-                _settings.TotalDamage += damageAmount;
-
-            if (_huddamage != null)
+            catch (Exception e)
             {
-                GameManager.instance.StartCoroutine(PlayBad(_huddamage.GetComponent<SpriteRenderer>()));
-                _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
+                LogError(e.Message);
+                LogError(e.StackTrace);
             }
+
             return damageAmount;
         }
 
@@ -263,19 +276,26 @@ namespace DeathCounter
         private void OnUnpause(On.UIManager.orig_UIClosePauseMenu origUIClosePauseMenu, UIManager self)
         {
             origUIClosePauseMenu(self);
-
-            _huddeath?.Recycle();
-            _huddamage?.Recycle();
-            var inventoryFSM = GameManager.instance.inventoryFSM;
-            var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
-            var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
-            if (GlobalSettings.ShowDeathCounter)
+            try
             {
-                DrawHudDeath(prefab, hudCanvas);
+                _huddeath?.Recycle();
+                _huddamage?.Recycle();
+                var inventoryFSM = GameManager.instance.inventoryFSM;
+                var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
+                var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
+                if (GlobalSettings.ShowDeathCounter)
+                {
+                    DrawHudDeath(prefab, hudCanvas);
+                }
+                if (GlobalSettings.ShowHitCounter)
+                {
+                    DrawHudDamage(prefab, hudCanvas);
+                }
             }
-            if (GlobalSettings.ShowHitCounter)
+            catch (Exception e)
             {
-                DrawHudDamage(prefab, hudCanvas);
+                LogError(e.Message);
+                LogError(e.StackTrace);
             }
         }
 
