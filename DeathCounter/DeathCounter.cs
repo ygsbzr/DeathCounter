@@ -17,7 +17,7 @@ namespace DeathCounter
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-6";
+        public override string GetVersion() => "1.5.78-6-logging";
 
         public static SaveSettings _settings = new SaveSettings();
 
@@ -71,6 +71,11 @@ namespace DeathCounter
         private void Awake(On.HeroController.orig_Awake orig, HeroController self)
         {
             orig(self);
+            
+            Log("Awake start");
+            Log($"Deaths: {_settings.Deaths}");
+            Log($"Damage: {_settings.TotalDamage}");
+
             var inventoryFSM = GameManager.instance.inventoryFSM;
 
             var invCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("Inv");
@@ -82,11 +87,13 @@ namespace DeathCounter
             DrawHudDamage(prefab, hudCanvas);
             if (!GlobalSettings.ShowDeathCounter)
             {
+                Log("Removing Death counter");
                 _huddeath?.Recycle();
                 _huddeath = null;
             }
             if (!GlobalSettings.ShowHitCounter)
             {
+                Log("Removing Damage counter");
                 _huddamage?.Recycle();
                 _huddamage = null;
             }
@@ -235,13 +242,37 @@ namespace DeathCounter
 
         private void DrawHudDeath(GameObject prefab, GameObject hudCanvas)
         {
-            _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(GetHudDeathX(), GetHudDeathY()));
-            _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            try
+            {
+                var deaths = _settings.Deaths.ToString();
+                var deathX = GetHudDeathX();
+                var deathY = GetHudDeathY();
+                Log($"Drawing Death counter (Count: {deaths}, Position:({deathX},{deathY})");
+                _huddeath = CreateStatObject("death", deaths, prefab, hudCanvas.transform, _deathSprite, new Vector3(deathX, deathY));
+                _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            }
+            catch (Exception e)
+            {
+                LogError(e.Message);
+                LogError(e.StackTrace);
+            }
         }
         private void DrawHudDamage(GameObject prefab, GameObject hudCanvas)
         {
-            _huddamage = CreateStatObject("damage", _settings.TotalDamage.ToString(), prefab, hudCanvas.transform, _damageSprite, new Vector3(GetHudDamageX(), GetHudDamageY()));
-            _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            try
+            {
+                var damage = _settings.TotalDamage.ToString();
+                var damageX = GetHudDamageX();
+                var damageY = GetHudDamageY();
+                Log($"Drawing Damage counter (Count: {damage}, Position:({damageX},{damageY})");
+                _huddamage = CreateStatObject("damage", damage, prefab, hudCanvas.transform, _damageSprite, new Vector3(damageX, damageY));
+                _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            }
+            catch (Exception e)
+            {
+                LogError(e.Message);
+                LogError(e.StackTrace);
+            }
         }
 
         private GameObject CreateStatObject(string name, string text, GameObject prefab, Transform parent, Sprite sprite, Vector3 postoAdd)
@@ -278,8 +309,21 @@ namespace DeathCounter
             origUIClosePauseMenu(self);
             try
             {
-                _huddeath?.Recycle();
-                _huddamage?.Recycle();
+                if (_huddeath != null || _huddamage != null)
+                {
+                    Log("Removing counters");
+                    _huddeath?.Recycle();
+                    _huddamage?.Recycle();
+                }
+                if (!GlobalSettings.ShowDeathCounter)
+                {
+                    _huddeath = null;
+                }
+                if (!GlobalSettings.ShowHitCounter)
+                {
+                    _huddamage = null;
+                }
+                
                 var inventoryFSM = GameManager.instance.inventoryFSM;
                 var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
                 var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
