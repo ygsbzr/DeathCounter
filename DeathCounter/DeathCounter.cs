@@ -39,7 +39,9 @@ namespace DeathCounter
         private GameObject _huddeath;
         private GameObject _death;
         private GameObject _damage;
-
+        private Vector3 origpos;
+        private Vector3 origdeathamountpos;
+        private Vector3 origdamageamountpos;
         private Texture2D[] _textures;
 
         public static GlobalSettings GlobalSettings { get; set; } = new GlobalSettings();
@@ -81,21 +83,22 @@ namespace DeathCounter
             var invCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("Inv");
             var uiControl = invCanvas.LocateMyFSM("UI Inventory");
             var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
-
+            origpos=prefab.transform.position;
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
             DrawHudDeath(prefab, hudCanvas);
             DrawHudDamage(prefab, hudCanvas);
+            origdeathamountpos = _huddeath.FindGameObjectInChildren("Geo Amount").transform.position;
+            origdamageamountpos = _huddamage.FindGameObjectInChildren("Geo Amount").transform.position;
             if (!GlobalSettings.ShowDeathCounter)
             {
-                Log("Removing Death counter");
-                _huddeath?.Recycle();
-                _huddeath = null;
+                Log("Disable Death counter");
+                _huddeath.SetActive(false);
             }
             if (!GlobalSettings.ShowHitCounter)
             {
-                Log("Removing Damage counter");
-                _huddamage?.Recycle();
-                _huddamage = null;
+                Log("Disable Damage counter");
+                _huddamage.SetActive(false);
+               
             }
 
             _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
@@ -223,8 +226,6 @@ namespace DeathCounter
         private const float UnderGeoCountY = 10.55f;
         private const float FurtherUnderGeoCountY = 9.8f;
 
-        private float GetHudDeathY() => GetHudY();
-        private float GetHudDamageY() => GetHudY();
 
         private float GetHudY() => GlobalSettings.BesideGeoCount
             ? BesideGeoCountY
@@ -246,7 +247,7 @@ namespace DeathCounter
             {
                 var deaths = _settings.Deaths.ToString();
                 var deathX = GetHudDeathX();
-                var deathY = GetHudDeathY();
+                var deathY = GetHudY();
                 Log($"Drawing Death counter (Count: {deaths}, Position:({deathX},{deathY})");
                 _huddeath = CreateStatObject("death", deaths, prefab, hudCanvas.transform, _deathSprite, new Vector3(deathX, deathY));
                 _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
@@ -263,7 +264,7 @@ namespace DeathCounter
             {
                 var damage = _settings.TotalDamage.ToString();
                 var damageX = GetHudDamageX();
-                var damageY = GetHudDamageY();
+                var damageY = GetHudY();
                 Log($"Drawing Damage counter (Count: {damage}, Position:({damageX},{damageY})");
                 _huddamage = CreateStatObject("damage", damage, prefab, hudCanvas.transform, _damageSprite, new Vector3(damageX, damageY));
                 _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
@@ -273,6 +274,8 @@ namespace DeathCounter
                 LogError(e.Message);
                 LogError(e.StackTrace);
             }
+            _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(GetHudDeathX(), GetHudY()));
+            _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
         }
 
         private GameObject CreateStatObject(string name, string text, GameObject prefab, Transform parent, Sprite sprite, Vector3 postoAdd)
@@ -309,38 +312,38 @@ namespace DeathCounter
             origUIClosePauseMenu(self);
             try
             {
-                if (_huddeath != null || _huddamage != null)
-                {
-                    Log("Removing counters");
-                    _huddeath?.Recycle();
-                    _huddamage?.Recycle();
-                }
+
                 if (!GlobalSettings.ShowDeathCounter)
                 {
-                    _huddeath = null;
+                    Log("Disable Death counter");
+                    _huddeath.SetActive(false);
                 }
                 if (!GlobalSettings.ShowHitCounter)
                 {
-                    _huddamage = null;
+                    Log("Disable Damage counter");
+                    _huddamage.SetActive(false);
                 }
-                
-                var inventoryFSM = GameManager.instance.inventoryFSM;
-                var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
-                var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
                 if (GlobalSettings.ShowDeathCounter)
                 {
-                    DrawHudDeath(prefab, hudCanvas);
+                    _huddeath.SetActive(true);
                 }
-                if (GlobalSettings.ShowHitCounter)
+                if(GlobalSettings.ShowHitCounter)
                 {
-                    DrawHudDamage(prefab, hudCanvas);
+                    _huddamage.SetActive(true);
                 }
+                _huddamage.transform.position = origpos + new Vector3(GetHudDamageX(), GetHudY());
+                _huddeath.transform.position = origpos + new Vector3(GetHudDeathX(), GetHudY());
+                _huddeath.FindGameObjectInChildren("Geo Amount").transform.position =origdeathamountpos- new Vector3(0.3f, 0, 0);
+               _huddamage.FindGameObjectInChildren("Geo Amount").transform.position =origdamageamountpos- new Vector3(0.3f, 0, 0);
             }
             catch (Exception e)
             {
+
                 LogError(e.Message);
                 LogError(e.StackTrace);
             }
+            
+           
         }
 
         public void Unload()
