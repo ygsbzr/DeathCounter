@@ -274,8 +274,7 @@ namespace DeathCounter
                 LogError(e.Message);
                 LogError(e.StackTrace);
             }
-            _huddeath = CreateStatObject("death", _settings.Deaths.ToString(), prefab, hudCanvas.transform, _deathSprite, new Vector3(GetHudDeathX(), GetHudY()));
-            _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
+            
         }
 
         private GameObject CreateStatObject(string name, string text, GameObject prefab, Transform parent, Sprite sprite, Vector3 postoAdd)
