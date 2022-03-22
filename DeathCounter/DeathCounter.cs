@@ -40,8 +40,6 @@ namespace DeathCounter
         private GameObject _death;
         private GameObject _damage;
         private Vector3 origpos;
-        private Vector3 origdeathamountpos;
-        private Vector3 origdamageamountpos;
         private Texture2D[] _textures;
 
         public static GlobalSettings GlobalSettings { get; set; } = new GlobalSettings();
@@ -87,8 +85,6 @@ namespace DeathCounter
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
             DrawHudDeath(prefab, hudCanvas);
             DrawHudDamage(prefab, hudCanvas);
-            origdeathamountpos = _huddeath.FindGameObjectInChildren("Geo Amount").transform.position;
-            origdamageamountpos = _huddamage.FindGameObjectInChildren("Geo Amount").transform.position;
             if (!GlobalSettings.ShowDeathCounter)
             {
                 Log("Disable Death counter");
@@ -332,8 +328,6 @@ namespace DeathCounter
                 }
                 _huddamage.transform.position = origpos + new Vector3(GetHudDamageX(), GetHudY());
                 _huddeath.transform.position = origpos + new Vector3(GetHudDeathX(), GetHudY());
-                _huddeath.FindGameObjectInChildren("Geo Amount").transform.position =origdeathamountpos- new Vector3(0.3f, 0, 0);
-               _huddamage.FindGameObjectInChildren("Geo Amount").transform.position =origdamageamountpos- new Vector3(0.3f, 0, 0);
             }
             catch (Exception e)
             {
