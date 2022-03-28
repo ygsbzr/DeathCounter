@@ -111,9 +111,9 @@ namespace DeathCounter
             uiControl.ChangeTransition("Death", "UI LEFT", "Geo");
             uiControl.ChangeTransition("Death", "UI UP", "Trinket 1");
 
-            uiControl.AddTransition("Damage", "UI RIGHT", "Trinket 4");
-            uiControl.AddTransition("Damage", "UI LEFT", "Death");
-            uiControl.AddTransition("Damage", "UI UP", "Trinket 1");
+            uiControl.ChangeTransition("Damage", "UI RIGHT", "Trinket 4");
+            uiControl.ChangeTransition("Damage", "UI LEFT", "Death");
+            uiControl.ChangeTransition("Damage", "UI UP", "Trinket 1");
 
             uiControl.AddTransition("Trinket 1", "UI DOWN", "Death");
             uiControl.AddTransition("Trinket 2", "UI DOWN", "Death");
