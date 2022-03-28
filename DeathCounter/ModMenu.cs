@@ -34,7 +34,7 @@ namespace DeathCounter
                     new HorizontalOption(
                         "Display Position:",
                         "Toggle where to display the counters",
-                        new string[] { "Beside Geo", "Under Geo", "Further Under Geo" },
+                        new string[] { "Beside Geo", "Under Geo", "Beside Essence", "Under Essence", "On Screen Edge", "Above Masks" },
                         i => SetDisplayState(i),
                         () => GetDisplayState()),
                     new MenuButton("Reset Death Count",
@@ -50,14 +50,20 @@ namespace DeathCounter
         {
             DeathCounter.GlobalSettings.BesideGeoCount = i == 0;
             DeathCounter.GlobalSettings.UnderGeoCount = i == 1;
-            DeathCounter.GlobalSettings.FurtherUnderGeoCount = i == 2;
+            DeathCounter.GlobalSettings.BesideEssenceCount = i == 2;
+            DeathCounter.GlobalSettings.UnderEssenceCount = i == 3;
+            DeathCounter.GlobalSettings.OnLeftEdge = i == 4;
+            DeathCounter.GlobalSettings.AboveMasks = i == 5;
         }
 
         public static int GetDisplayState()
         {
             if (DeathCounter.GlobalSettings.BesideGeoCount) return 0;
             else if (DeathCounter.GlobalSettings.UnderGeoCount) return 1;
-            else if (DeathCounter.GlobalSettings.FurtherUnderGeoCount) return 2;
+            else if (DeathCounter.GlobalSettings.BesideEssenceCount) return 2;
+            else if (DeathCounter.GlobalSettings.UnderEssenceCount) return 3;
+            else if (DeathCounter.GlobalSettings.OnLeftEdge) return 4;
+            else if (DeathCounter.GlobalSettings.AboveMasks) return 5;
             return 0;
         }
     }
