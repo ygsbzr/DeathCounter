@@ -17,7 +17,7 @@ namespace DeathCounter
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-6-logging";
+        public override string GetVersion() => "1.5.78-7";
 
         public static SaveSettings _settings = new SaveSettings();
 
@@ -71,8 +71,7 @@ namespace DeathCounter
         private void Awake(On.HeroController.orig_Awake orig, HeroController self)
         {
             orig(self);
-            
-            Log("Awake start");
+
             Log($"Deaths: {_settings.Deaths}");
             Log($"Damage: {_settings.TotalDamage}");
 
@@ -81,20 +80,17 @@ namespace DeathCounter
             var invCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("Inv");
             var uiControl = invCanvas.LocateMyFSM("UI Inventory");
             var prefab = inventoryFSM.gameObject.FindGameObjectInChildren("Geo");
-            origpos=prefab.transform.position;
+            origpos = prefab.transform.position;
             var hudCanvas = GameObject.Find("_GameCameras").FindGameObjectInChildren("HudCamera").FindGameObjectInChildren("Hud Canvas");
             DrawHudDeath(prefab, hudCanvas);
             DrawHudDamage(prefab, hudCanvas);
             if (!GlobalSettings.ShowDeathCounter)
             {
-                Log("Disable Death counter");
-                _huddeath.SetActive(false);
+                _huddeath?.SetActive(false);
             }
             if (!GlobalSettings.ShowHitCounter)
             {
-                Log("Disable Damage counter");
-                _huddamage.SetActive(false);
-               
+                _huddamage?.SetActive(false);
             }
 
             _death = CreateStatObject("death", _settings.Deaths.ToString(), prefab, invCanvas.transform, _deathSprite, new Vector3(6.5f, 0, 0));
@@ -114,6 +110,10 @@ namespace DeathCounter
             uiControl.ChangeTransition("Death", "UI RIGHT", "Damage");
             uiControl.ChangeTransition("Death", "UI LEFT", "Geo");
             uiControl.ChangeTransition("Death", "UI UP", "Trinket 1");
+
+            // TODO: Add more of the above (if you navigate to damage, you lock up the inventory until it is closed)
+
+            // TODO: The following don't work, need to add them properly
 
             uiControl.AddTransition("Trinket 1", "UI DOWN", "Death", false);
             uiControl.AddTransition("Trinket 2", "UI DOWN", "Death", false);
@@ -159,7 +159,7 @@ namespace DeathCounter
             switch (key)
             {
                 case "INV_NAME_DEATH":
-                    return "Death";
+                    return "Deaths";
                 case "INV_DESC_DEATH":
                     return "Imagine dying.";
                 case "INV_NAME_DAMAGE":
@@ -212,40 +212,52 @@ namespace DeathCounter
         private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
             => new Vector2(uv.x * width, uv.y * height);
 
-        private const float DefaultHudDeathX = 2.2f;
-        private const float DefaultHudDamageX = 4.3f;
+        public class CounterCoordinate
+        {
+            public float X;
+            public float Y;
+        }
 
-        private const float AlignedHudDeathX = -1.1f;
-        private const float AlignedHudDamageX = 1f;
+        public class CounterLocation
+        {
+            public CounterCoordinate Death;
+            public CounterCoordinate Damage;
+        }
 
-        private const float BesideGeoCountY = 11.3f;
-        private const float UnderGeoCountY = 10.55f;
-        private const float FurtherUnderGeoCountY = 9.8f;
+        private Dictionary<string, CounterLocation> CounterLocations = new Dictionary<string, CounterLocation>
+        {
+            { "Beside Geo", new CounterLocation { Death = new CounterCoordinate { X = 2.2f, Y = 11.3f }, Damage = new CounterCoordinate { X = 4.3f, Y = 11.3f } } },
+            { "Under Geo", new CounterLocation { Death = new CounterCoordinate { X = 2.2f, Y = 10.55f }, Damage = new CounterCoordinate { X = 4.3f, Y = 10.55f } } },
+            { "Beside Essence", new CounterLocation { Death = new CounterCoordinate { X = 1.0f, Y = 9.65f }, Damage = new CounterCoordinate { X = 3.1f, Y = 9.65f } } },
+            { "Under Essence", new CounterLocation { Death = new CounterCoordinate { X = -1.1f, Y = 9.05f }, Damage = new CounterCoordinate { X = 1.0f, Y = 9.05f } } },
+            { "On Screen Edge", new CounterLocation { Death = new CounterCoordinate { X = -5.0f, Y = 10.4f }, Damage = new CounterCoordinate { X = -5.0f, Y = 9.5f } } },
+            { "Above Masks", new CounterLocation { Death = new CounterCoordinate { X = -0.15f, Y = 13.5f }, Damage = new CounterCoordinate { X = 2.05f, Y = 13.5f } } },
+        };
 
-
-        private float GetHudY() => GlobalSettings.BesideGeoCount
-            ? BesideGeoCountY
-            : GlobalSettings.UnderGeoCount
-                ? UnderGeoCountY
-                : GlobalSettings.FurtherUnderGeoCount
-                    ? FurtherUnderGeoCountY
-                    : BesideGeoCountY;
-
-        private float GetHudDeathX() => GlobalSettings.FurtherUnderGeoCount ? AlignedHudDeathX : DefaultHudDeathX;
-        
-        private float GetHudDamageX() => GlobalSettings.ShowDeathCounter ?
-            (GlobalSettings.FurtherUnderGeoCount ? AlignedHudDamageX : DefaultHudDamageX) :
-            GetHudDeathX();
+        private CounterLocation GetPositionOption()
+        {
+            return GlobalSettings.BesideGeoCount
+                ? CounterLocations["Beside Geo"]
+                : GlobalSettings.UnderGeoCount
+                ? CounterLocations["Under Geo"]
+                : GlobalSettings.BesideEssenceCount
+                ? CounterLocations["Beside Essence"]
+                : GlobalSettings.UnderEssenceCount
+                ? CounterLocations["Under Essence"]
+                : GlobalSettings.OnLeftEdge
+                ? CounterLocations["On Screen Edge"]
+                : GlobalSettings.AboveMasks
+                ? CounterLocations["Above Masks"]
+                : CounterLocations["Above Masks"];
+        }
 
         private void DrawHudDeath(GameObject prefab, GameObject hudCanvas)
         {
             try
             {
                 var deaths = _settings.Deaths.ToString();
-                var deathX = GetHudDeathX();
-                var deathY = GetHudY();
-                Log($"Drawing Death counter (Count: {deaths}, Position:({deathX},{deathY})");
-                _huddeath = CreateStatObject("death", deaths, prefab, hudCanvas.transform, _deathSprite, new Vector3(deathX, deathY));
+                var deathPosition = GetPositionOption().Death;
+                _huddeath = CreateStatObject("death", deaths, prefab, hudCanvas.transform, _deathSprite, new Vector3(deathPosition.X, deathPosition.Y));
                 _huddeath.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
             }
             catch (Exception e)
@@ -259,10 +271,8 @@ namespace DeathCounter
             try
             {
                 var damage = _settings.TotalDamage.ToString();
-                var damageX = GetHudDamageX();
-                var damageY = GetHudY();
-                Log($"Drawing Damage counter (Count: {damage}, Position:({damageX},{damageY})");
-                _huddamage = CreateStatObject("damage", damage, prefab, hudCanvas.transform, _damageSprite, new Vector3(damageX, damageY));
+                var damagePosition = GetPositionOption().Damage;
+                _huddamage = CreateStatObject("damage", damage, prefab, hudCanvas.transform, _damageSprite, new Vector3(damagePosition.X, damagePosition.Y));
                 _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
             }
             catch (Exception e)
@@ -270,7 +280,6 @@ namespace DeathCounter
                 LogError(e.Message);
                 LogError(e.StackTrace);
             }
-            
         }
 
         private GameObject CreateStatObject(string name, string text, GameObject prefab, Transform parent, Sprite sprite, Vector3 postoAdd)
@@ -310,24 +319,27 @@ namespace DeathCounter
 
                 if (!GlobalSettings.ShowDeathCounter)
                 {
-                    Log("Disable Death counter");
-                    _huddeath.SetActive(false);
+                    _huddeath?.SetActive(false);
                 }
+                else
+                {
+                    _huddeath?.SetActive(true);
+                }
+
                 if (!GlobalSettings.ShowHitCounter)
                 {
-                    Log("Disable Damage counter");
-                    _huddamage.SetActive(false);
+                    _huddamage?.SetActive(false);
                 }
-                if (GlobalSettings.ShowDeathCounter)
+                else
                 {
-                    _huddeath.SetActive(true);
+                    _huddamage?.SetActive(true);
                 }
-                if(GlobalSettings.ShowHitCounter)
-                {
-                    _huddamage.SetActive(true);
-                }
-                _huddamage.transform.position = origpos + new Vector3(GetHudDamageX(), GetHudY());
-                _huddeath.transform.position = origpos + new Vector3(GetHudDeathX(), GetHudY());
+
+                var position = GetPositionOption();
+                if (_huddamage != null)
+                    _huddamage.transform.position = origpos + new Vector3(position.Damage.X, position.Damage.Y);
+                if (_huddeath != null)
+                    _huddeath.transform.position = origpos + new Vector3(position.Death.X, position.Death.Y);
             }
             catch (Exception e)
             {
@@ -335,16 +347,16 @@ namespace DeathCounter
                 LogError(e.Message);
                 LogError(e.StackTrace);
             }
-            
-           
         }
 
         public void Unload()
         {
             _settings.Deaths = 0;
             _settings.TotalDamage = 0;
-            if (_huddeath != null) _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
-            if (_huddamage != null) _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
+            if (_huddeath != null)
+                _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
+            if (_huddamage != null)
+                _huddamage.GetComponent<DisplayItemAmount>().textObject.text = _settings.TotalDamage.ToString();
             ModHooks.TakeHealthHook -= TakeHealth;
             ModHooks.LanguageGetHook -= OnLangGet;
             On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
