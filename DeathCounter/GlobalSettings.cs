@@ -1,4 +1,4 @@
-﻿namespace DeathCounter
+namespace DeathCounter
 {
     public class GlobalSettings
     {
@@ -6,10 +6,16 @@
 
         public bool ShowHitCounter = true;
 
-        public bool BesideGeoCount = true;
+        public bool AboveMasks = true;
+
+        public bool BesideGeoCount = false;
 
         public bool UnderGeoCount = false;
 
-        public bool FurtherUnderGeoCount = false;
+        public bool BesideEssenceCount = false;
+
+        public bool UnderEssenceCount = false;
+
+        public bool OnLeftEdge = false;
     }
 }
