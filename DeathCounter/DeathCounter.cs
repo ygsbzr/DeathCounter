@@ -17,7 +17,7 @@ namespace DeathCounter
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-7";
+        public override string GetVersion() => "1.5.78-8";
 
         public static SaveSettings _settings = new SaveSettings();
 
@@ -113,7 +113,7 @@ namespace DeathCounter
 
             uiControl.ChangeTransition("Damage", "UI RIGHT", "Trinket 4");
             uiControl.ChangeTransition("Damage", "UI LEFT", "Death");
-            uiControl.ChangeTransition("Damage", "UI UP", "Trinket 1");
+            uiControl.ChangeTransition("Damage", "UI UP", "Trinket 4");
 
             uiControl.AddTransition("Trinket 1", "UI DOWN", "Death");
             uiControl.AddTransition("Trinket 2", "UI DOWN", "Death");
@@ -189,29 +189,6 @@ namespace DeathCounter
             }
         }
 
-        IEnumerator epic()
-        {
-            yield return new WaitWhile(() => CharmIconList.Instance == null);
-            var invTexture = _textures[2];
-            Modding.Logger.Log(invTexture.name);
-            var orig = CharmIconList.Instance.spriteList[7];
-            Modding.Logger.Log(orig.rect);
-            foreach (var u in orig.uv)
-                Modding.Logger.Log(new Vector2(ConvertUVToPixelCoordinates(u, orig.texture.width, orig.texture.height).x, orig.texture.height - ConvertUVToPixelCoordinates(u, orig.texture.width, orig.texture.height).y));
-
-            var coords = orig.uv.Select(v => ConvertUVToPixelCoordinates(v, orig.texture.width, orig.texture.height));
-            var x = coords.Min(v => v.x);
-            var y = coords.Min(v => v.y);
-            var texture = orig.texture;
-            Modding.Logger.Log(new Vector2(x, y));
-            var newSprite = Sprite.Create(invTexture, new Rect(x, y, orig.rect.width, orig.rect.height), new Vector2(0.5f, 0.5f));
-
-            CharmIconList.Instance.spriteList[7] = newSprite;
-        }
-
-        private Vector2 ConvertUVToPixelCoordinates(Vector2 uv, int width, int height)
-            => new Vector2(uv.x * width, uv.y * height);
-
         public class CounterCoordinate
         {
             public float X;
@@ -271,7 +248,7 @@ namespace DeathCounter
             try
             {
                 var damage = _settings.TotalDamage.ToString();
-                var damagePosition = GetPositionOption().Damage;
+                var damagePosition = GlobalSettings.ShowDeathCounter ? GetPositionOption().Damage : GetPositionOption().Death;
                 _huddamage = CreateStatObject("damage", damage, prefab, hudCanvas.transform, _damageSprite, new Vector3(damagePosition.X, damagePosition.Y));
                 _huddamage.FindGameObjectInChildren("Geo Amount").transform.position -= new Vector3(0.3f, 0, 0);
             }
@@ -316,7 +293,6 @@ namespace DeathCounter
             origUIClosePauseMenu(self);
             try
             {
-
                 if (!GlobalSettings.ShowDeathCounter)
                 {
                     _huddeath?.SetActive(false);
