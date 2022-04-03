@@ -318,7 +318,7 @@ namespace DeathCounter
                 else if (_huddeath != null)
                 {
                     _huddeath.SetActive(true);
-                    _huddeath.transform.position = origpos + new Vector3(position.Death.X, position.Death.Y);
+                    _huddeath.transform.position = origpos + new Vector3(deathPosition.X, deathPosition.Y);
                 }
 
                 if (!GlobalSettings.ShowHitCounter)
@@ -328,7 +328,7 @@ namespace DeathCounter
                 else if (_huddamage != null)
                 {
                     _huddamage.SetActive(true);
-                    _huddamage.transform.position = origpos + new Vector3(position.Damage.X, position.Damage.Y);
+                    _huddamage.transform.position = origpos + new Vector3(damagePosition.X, damagePosition.Y);
                 }
             }
             catch (Exception e)
