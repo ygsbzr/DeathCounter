@@ -111,14 +111,14 @@ namespace DeathCounter
             uiControl.ChangeTransition("Death", "UI LEFT", "Geo");
             uiControl.ChangeTransition("Death", "UI UP", "Trinket 1");
 
-            // TODO: Add more of the above (if you navigate to damage, you lock up the inventory until it is closed)
+            uiControl.ChangeTransition("Damage", "UI RIGHT", "Trinket 4");
+            uiControl.ChangeTransition("Damage", "UI LEFT", "Death");
+            uiControl.ChangeTransition("Damage", "UI UP", "Trinket 1");
 
-            // TODO: The following don't work, need to add them properly
-
-            uiControl.AddTransition("Trinket 1", "UI DOWN", "Death", false);
-            uiControl.AddTransition("Trinket 2", "UI DOWN", "Death", false);
-            uiControl.AddTransition("Trinket 3", "UI DOWN", "Death", false);
-            uiControl.AddTransition("Trinket 4", "UI DOWN", "Death", false);
+            uiControl.AddTransition("Trinket 1", "UI DOWN", "Death");
+            uiControl.AddTransition("Trinket 2", "UI DOWN", "Death");
+            uiControl.AddTransition("Trinket 3", "UI DOWN", "Death");
+            uiControl.AddTransition("Trinket 4", "UI DOWN", "Death");
         }
 
         private int TakeHealth(int damageAmount)
