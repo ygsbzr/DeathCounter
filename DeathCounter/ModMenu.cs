@@ -39,10 +39,18 @@ namespace DeathCounter
                         () => GetDisplayState()),
                     new MenuButton("Reset Death Count",
                         "Click button to reset Death",
-                        (_) => DeathCounter._settings.Deaths = 0),
+                        (_) =>
+                        {
+                            DeathCounter._settings.Deaths=0;
+                            DeathCounter._huddeath.GetComponent<DisplayItemAmount>().textObject.text =DeathCounter. _settings.Deaths.ToString();
+                        }),
                     new MenuButton("Reset Damage Count",
                         "Click button to reset Damage",
-                        (_) => DeathCounter._settings.TotalDamage = 0)
+                        (_) =>
+                        {
+                            DeathCounter._settings.TotalDamage = 0;
+                           DeathCounter._huddamage.GetComponent<DisplayItemAmount>().textObject.text =DeathCounter. _settings.TotalDamage.ToString();
+                        })
                 });
         }
 

@@ -36,8 +36,8 @@ namespace DeathCounter
         private Sprite _deathSprite;
         private Sprite _damageSprite;
 
-        private GameObject _huddamage;
-        private GameObject _huddeath;
+        public static GameObject _huddamage;
+        public static GameObject _huddeath;
         private GameObject _death;
         private GameObject _damage;
         private Vector3 origpos;
