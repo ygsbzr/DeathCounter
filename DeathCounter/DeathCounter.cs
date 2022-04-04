@@ -18,7 +18,7 @@ namespace DeathCounter
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-8";
+        public override string GetVersion() => "1.5.78-8.1";
 
         public static SaveSettings _settings = new SaveSettings();
 
@@ -352,6 +352,7 @@ namespace DeathCounter
             On.DisplayItemAmount.OnEnable -= OnDisplayAmount;
             On.HeroController.Awake -= Awake;
             On.UIManager.UIClosePauseMenu -= OnUnpause;
+            GlobalSettings.PropertyChanged -= GlobalSettings_PropertyChanged;
         }
 
         IEnumerator PlayBad(SpriteRenderer s)
