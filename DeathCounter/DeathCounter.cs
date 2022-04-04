@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections;
 using Satchel;
 using EXutil = DeathCounter.Extensions.FsmUtil;
+using System.ComponentModel;
 
 namespace DeathCounter
 {
@@ -66,6 +67,8 @@ namespace DeathCounter
             ModHooks.LanguageGetHook += OnLangGet;
             On.DisplayItemAmount.OnEnable += OnDisplayAmount;
             On.UIManager.UIClosePauseMenu += OnUnpause;
+
+            GlobalSettings.PropertyChanged += GlobalSettings_PropertyChanged;
         }
 
         private void Awake(On.HeroController.orig_Awake orig, HeroController self)
@@ -291,31 +294,42 @@ namespace DeathCounter
         private void OnUnpause(On.UIManager.orig_UIClosePauseMenu origUIClosePauseMenu, UIManager self)
         {
             origUIClosePauseMenu(self);
+            RedrawCounters();
+        }
+
+        private void GlobalSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            Log($"{e.PropertyName} changed");
+            RedrawCounters();
+        }
+
+        private void RedrawCounters()
+        {
             try
             {
+                var position = GetPositionOption();
+                var deathPosition = position.Death;
+                var damagePosition = GlobalSettings.ShowDeathCounter ? position.Damage : position.Death;
+
                 if (!GlobalSettings.ShowDeathCounter)
                 {
                     _huddeath?.SetActive(false);
                 }
-                else
+                else if (_huddeath != null)
                 {
-                    _huddeath?.SetActive(true);
+                    _huddeath.SetActive(true);
+                    _huddeath.transform.position = origpos + new Vector3(deathPosition.X, deathPosition.Y);
                 }
 
                 if (!GlobalSettings.ShowHitCounter)
                 {
                     _huddamage?.SetActive(false);
                 }
-                else
+                else if (_huddamage != null)
                 {
-                    _huddamage?.SetActive(true);
+                    _huddamage.SetActive(true);
+                    _huddamage.transform.position = origpos + new Vector3(damagePosition.X, damagePosition.Y);
                 }
-
-                var position = GetPositionOption();
-                if (_huddamage != null)
-                    _huddamage.transform.position = origpos + new Vector3(position.Damage.X, position.Damage.Y);
-                if (_huddeath != null)
-                    _huddeath.transform.position = origpos + new Vector3(position.Death.X, position.Death.Y);
             }
             catch (Exception e)
             {
