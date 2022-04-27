@@ -1,92 +1,63 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6663FCBD-7DD7-4DF3-B0F5-F25AF4F95C0B}</ProjectGuid>
+    <TargetFramework>net472</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DeathCounter</RootNamespace>
-    <AssemblyName>DeathCounter</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
     <HKModdingApi>D:\HKmod\1.5Moddingapi\</HKModdingApi>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(HKModdingApi)Assembly-CSharp.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp">
       <HintPath>..\..\1.5Moddingapi\MMHOOK_Assembly-CSharp.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>$(HKModdingApi)PlayMaker.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="Satchel">
       <HintPath>..\..\1.5Moddingapi\Satchel.dll</HintPath>
+		<Private>false</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
       <HintPath>$(HKModdingApi)UnityEngine.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>$(HKModdingApi)UnityEngine.AnimationModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(HKModdingApi)UnityEngine.CoreModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
       <HintPath>..\..\1.5Moddingapi\UnityEngine.ImageConversionModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.JSONSerializeModule">
       <HintPath>$(HKModdingApi)UnityEngine.JSONSerializeModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.Physics2DModule">
       <HintPath>$(HKModdingApi)UnityEngine.Physics2DModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>$(HKModdingApi)UnityEngine.TextRenderingModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(HKModdingApi)UnityEngine.UI.dll</HintPath>
+		<Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>$(HKModdingApi)UnityEngine.UIModule.dll</HintPath>
+		<Private>false</Private>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="DeathCounter.cs" />
-    <Compile Include="Extensions\FsmUtil.cs" />
-    <Compile Include="ModMenu.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="GlobalSettings.cs" />
-    <Compile Include="SaveSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="death.png" />
@@ -94,8 +65,10 @@
   <ItemGroup>
     <EmbeddedResource Include="brokenheart.png" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+  </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>xcopy /y "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\Mods"</PostBuildEvent>
+    <PostBuildEvent>xcopy /y "$(TargetPath)" "D:\Steamself\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\Mods\DeathCounter"</PostBuildEvent>
   </PropertyGroup>
 </Project>

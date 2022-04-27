@@ -18,7 +18,7 @@ namespace DeathCounter
     {
         public static DeathCounter Instance;
 
-        public override string GetVersion() => "1.5.78-8";
+        public override string GetVersion() => "1.5.78-9";
 
         public static SaveSettings _settings = new SaveSettings();
 
@@ -137,7 +137,7 @@ namespace DeathCounter
                         _huddeath.GetComponent<DisplayItemAmount>().textObject.text = _settings.Deaths.ToString();
                     }
                 }
-                if (damageAmount == 9999)
+                if (damageAmount >=100)
                     _settings.TotalDamage += PlayerData.instance.health + PlayerData.instance.healthBlue;
                 else
                     _settings.TotalDamage += damageAmount;
